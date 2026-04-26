@@ -74,6 +74,19 @@ body::before{
 .dir-btn.short.on{background:var(--red-bg);color:var(--red);box-shadow:inset 0 0 0 1px var(--red-br)}
 .dir-btn:not(.on):hover{color:var(--text2)}
 
+/* Confidence toggle */
+.conf-wrap{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px}
+.conf-btn{
+  flex:1;padding:8px 0;border-radius:8px;border:none;background:transparent;
+  color:var(--text3);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .18s;white-space:nowrap;
+}
+.conf-btn.high.on{background:rgba(74,222,128,0.12);color:var(--green);box-shadow:inset 0 0 0 1px var(--green-br)}
+.conf-btn.medium.on{background:rgba(251,191,36,0.1);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold-br)}
+.conf-btn.low.on{background:rgba(248,113,113,0.1);color:var(--red);box-shadow:inset 0 0 0 1px var(--red-br)}
+.conf-btn.none.on{background:var(--bg4);color:var(--text3);box-shadow:inset 0 0 0 1px var(--border-h)}
+.conf-btn:not(.on):hover{color:var(--text2)}
+
 /* RR */
 .rr-wrap{position:relative}
 .rr-wrap input{padding-right:44px}
@@ -296,6 +309,17 @@ body::before{
     </div>
     <div class="row">
       <div class="field">
+        <label>Confidence</label>
+        <div class="conf-wrap">
+          <button class="conf-btn high" id="ch" onclick="setConf('high')">🔥 HIGH</button>
+          <button class="conf-btn medium" id="cm_" onclick="setConf('medium')">⚡ MEDIUM</button>
+          <button class="conf-btn low" id="cl" onclick="setConf('low')">🌀 LOW</button>
+          <button class="conf-btn none on" id="cn" onclick="setConf('none')">— None</button>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
         <label>Entry ($)</label>
         <input id="entry" type="number" placeholder="100" oninput="gen()"/>
       </div>
@@ -369,6 +393,7 @@ body::before{
 
 <script>
 let D = 'long';
+let CONF = 'none';
 let PT = '';
 // Stores manual overrides: { index: value } where value is number or null (auto)
 let manualTP = {};
@@ -387,6 +412,17 @@ function setDir(d) {
   document.getElementById('bs').className = 'dir-btn short' + (d==='short' ? ' on' : '');
   gen();
 }
+
+function setConf(c) {
+  CONF = c;
+  ['high','medium','low','none'].forEach(k => {
+    const id = k === 'medium' ? 'cm_' : 'c' + k[0];
+    const el = document.getElementById(id);
+    if (el) el.className = 'conf-btn ' + k + (k === c ? ' on' : '');
+  });
+  gen();
+}
+
 
 function fmt(n) {
   if (isNaN(n)) return '—';
@@ -597,13 +633,17 @@ function rebuildOutput() {
 }
 
 function buildOutput(pair, finalTPs, entry, sl, rr, isL) {
-  const sep    = '____________________________________';
+  const sep      = '____________________________________';
   const dirEmoji = isL ? '🟢' : '🔴';
   const dirText  = D.toUpperCase();
-  const desc   = (document.getElementById('desc').value || '').trim();
-  const tpLines = finalTPs.map((tp, i) => `🔶TP${i+1}: $${fmt(tp)}`).join('\n');
+  const desc     = (document.getElementById('desc').value || '').trim();
+  const tpLines  = finalTPs.map((tp, i) => `🔶TP${i+1}: $${fmt(tp)}`).join('\n');
   const descLine = desc ? `\n\n${desc}` : '';
-  PT = `${sep}\n$${pair} ${dirEmoji}${dirText} RR 1:${rr}\n\n📍Entry: $${fmt(entry)}\n❌SL: $${fmt(sl)}\n${tpLines}${descLine}\n${sep}`;
+
+  const confMap  = { high: '🔥 Confidence: HIGH', medium: '⚡ Confidence: MEDIUM', low: '🌀 Confidence: LOW' };
+  const confLine = confMap[CONF] ? `\n${confMap[CONF]}\n` : '';
+
+  PT = `${sep}\n$${pair} ${dirEmoji}${dirText} RR 1:${rr}\n${confLine}\n📍Entry: $${fmt(entry)}\n❌SL: $${fmt(sl)}\n\n${tpLines}${descLine}\n${sep}`;
 
   // Colored preview
   const tpC = finalTPs.map((tp, i) => {
@@ -612,16 +652,20 @@ function buildOutput(pair, finalTPs, entry, sl, rr, isL) {
     return `<span class="${cls}">🔶TP${i+1}: $${fmt(tp)}</span>`;
   }).join('\n');
 
-  const descPreview = desc
-    ? `\n<span class="cm">${desc}</span>`
+  const confColorMap = { high: 'cg', medium: 'ca', low: 'cr' };
+  const confPreview  = confMap[CONF]
+    ? `\n<span class="${confColorMap[CONF]}">${confMap[CONF]}</span>\n`
     : '';
+
+  const descPreview = desc ? `\n<span class="cm">${desc}</span>` : '';
 
   document.getElementById('pv').innerHTML =
     `<span class="cm">${sep}</span>\n` +
-    `<span class="cw">$${pair}</span> ${dirEmoji}<span class="${isL?'cg':'cr'}">${dirText}</span> <span class="cm">RR</span> <span class="ca">1:${rr}</span>\n\n` +
-    `<span class="cm">📍Entry:</span> <span class="cw">$${fmt(entry)}</span>\n` +
+    `<span class="cw">$${pair}</span> ${dirEmoji}<span class="${isL?'cg':'cr'}">${dirText}</span> <span class="cm">RR</span> <span class="ca">1:${rr}</span>\n` +
+    `${confPreview}` +
+    `\n<span class="cm">📍Entry:</span> <span class="cw">$${fmt(entry)}</span>\n` +
     `<span class="cm">❌SL:   </span> <span class="cr">$${fmt(sl)}</span>\n` +
-    `${tpC}` +
+    `\n${tpC}` +
     `\n${descPreview}\n` +
     `<span class="cm">${sep}</span>`;
 }
