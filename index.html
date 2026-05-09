@@ -68,18 +68,18 @@ body::before{
 .row{display:flex;gap:9px;margin-bottom:9px}
 .row:last-child{margin-bottom:0}
 
-/* Order type 2x2 grid */
+/* Order type 3x2 grid */
 .otype-grid{
-  display:grid;grid-template-columns:1fr 1fr;gap:5px;
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;
   background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:4px;
 }
 .ot-btn{
   padding:8px 0;border-radius:7px;border:none;background:transparent;
-  color:var(--text3);font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;
-  cursor:pointer;transition:all .18s;letter-spacing:.15px;
+  color:var(--text3);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;
+  cursor:pointer;transition:all .18s;letter-spacing:.1px;
 }
-.ot-btn.ll.on,.ot-btn.sl.on{background:var(--green-bg);color:var(--green);box-shadow:inset 0 0 0 1px var(--green-br)}
-.ot-btn.ls.on,.ot-btn.ss.on{background:var(--red-bg);color:var(--red);box-shadow:inset 0 0 0 1px var(--red-br)}
+.ot-btn.ml.on,.ot-btn.ll.on,.ot-btn.sl.on{background:var(--green-bg);color:var(--green);box-shadow:inset 0 0 0 1px var(--green-br)}
+.ot-btn.ms.on,.ot-btn.ls.on,.ot-btn.ss.on{background:var(--red-bg);color:var(--red);box-shadow:inset 0 0 0 1px var(--red-br)}
 .ot-btn:not(.on):hover{color:var(--text2)}
 
 /* Confidence toggle */
@@ -289,9 +289,11 @@ body::before{
           <div class="field">
             <label>Tipe Order</label>
             <div class="otype-grid">
-              <button class="ot-btn ll on" id="ot-ll" onclick="setOrder('limit_long')">🟢 Limit Long</button>
-              <button class="ot-btn ls"    id="ot-ls" onclick="setOrder('limit_sell')">🔴 Limit Sell</button>
+              <button class="ot-btn ml on" id="ot-ml" onclick="setOrder('market_long')">🟢 Market Long</button>
+              <button class="ot-btn ll"    id="ot-ll" onclick="setOrder('limit_long')">🟢 Limit Long</button>
               <button class="ot-btn sl"    id="ot-sl" onclick="setOrder('stop_long')">🟢 Stop Long</button>
+              <button class="ot-btn ms"    id="ot-ms" onclick="setOrder('market_sell')">🔴 Market Sell</button>
+              <button class="ot-btn ls"    id="ot-ls" onclick="setOrder('limit_sell')">🔴 Limit Sell</button>
               <button class="ot-btn ss"    id="ot-ss" onclick="setOrder('stop_sell')">🔴 Stop Sell</button>
             </div>
           </div>
@@ -403,7 +405,7 @@ body::before{
 
 <script>
 // ── State ──────────────────────────────────────────────────────
-let ORDER = 'limit_long';
+let ORDER = 'market_long';
 let CONF  = 'none';
 let PT    = '';
 let manualTP   = {};
@@ -411,10 +413,12 @@ let autoTP     = [];
 let editingIdx = new Set();
 
 const ORDER_META = {
-  limit_long: { label:'LIMIT LONG', emoji:'🟢', isLong:true  },
-  limit_sell: { label:'LIMIT SELL', emoji:'🔴', isLong:false },
-  stop_long:  { label:'STOP LONG',  emoji:'🟢', isLong:true  },
-  stop_sell:  { label:'STOP SELL',  emoji:'🔴', isLong:false },
+  market_long: { label:'MARKET LONG', emoji:'🟢', isLong:true  },
+  market_sell: { label:'MARKET SELL', emoji:'🔴', isLong:false },
+  limit_long:  { label:'LIMIT LONG',  emoji:'🟢', isLong:true  },
+  limit_sell:  { label:'LIMIT SELL',  emoji:'🔴', isLong:false },
+  stop_long:   { label:'STOP LONG',   emoji:'🟢', isLong:true  },
+  stop_sell:   { label:'STOP SELL',   emoji:'🔴', isLong:false },
 };
 
 const PENCIL_SVG = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9.5 1.5l2 2-8 8H1.5v-2l8-8z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -445,7 +449,7 @@ async function pasteInto(id) {
 // ── Setters ────────────────────────────────────────────────────
 function setOrder(o) {
   ORDER = o;
-  const idMap = { limit_long:'ll', limit_sell:'ls', stop_long:'sl', stop_sell:'ss' };
+  const idMap = { market_long:'ml', market_sell:'ms', limit_long:'ll', limit_sell:'ls', stop_long:'sl', stop_sell:'ss' };
   Object.entries(idMap).forEach(([key, cls]) => {
     const el = document.getElementById('ot-' + cls);
     if (!el) return;
