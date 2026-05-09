@@ -95,6 +95,19 @@ body::before{
 .conf-btn.none.on{background:var(--bg4);color:var(--text3);box-shadow:inset 0 0 0 1px var(--border-h)}
 .conf-btn:not(.on):hover{color:var(--text2)}
 
+/* Paste button on inputs */
+.inp-wrap{position:relative}
+.inp-wrap input{padding-right:36px}
+.paste-btn{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:24px;height:24px;border-radius:6px;border:none;
+  background:transparent;color:var(--text3);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;padding:0;flex-shrink:0;
+}
+.paste-btn:hover{color:var(--text2);background:var(--bg4)}
+.paste-btn.ok{color:var(--green)}
+
 /* RR */
 .rr-wrap{position:relative}
 .rr-wrap input{padding-right:44px}
@@ -301,11 +314,21 @@ body::before{
         <div class="row">
           <div class="field">
             <label>Entry ($)</label>
-            <input id="entry" type="number" placeholder="100" oninput="gen()"/>
+            <div class="inp-wrap">
+              <input id="entry" type="number" placeholder="100" oninput="gen()"/>
+              <button class="paste-btn" id="pb-entry" onclick="pasteInto('entry')" title="Paste">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="4" y="4" width="8" height="9" rx="1.2" stroke="currentColor" stroke-width="1.3"/><path d="M4 4V3a1 1 0 011-1h4a1 1 0 011 1v1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M2 6h2M2 9h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
           </div>
           <div class="field">
             <label>Stop Loss ($)</label>
-            <input id="sl" type="number" placeholder="90" oninput="gen()"/>
+            <div class="inp-wrap">
+              <input id="sl" type="number" placeholder="90" oninput="gen()"/>
+              <button class="paste-btn" id="pb-sl" onclick="pasteInto('sl')" title="Paste">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><rect x="4" y="4" width="8" height="9" rx="1.2" stroke="currentColor" stroke-width="1.3"/><path d="M4 4V3a1 1 0 011-1h4a1 1 0 011 1v1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M2 6h2M2 9h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              </button>
+            </div>
           </div>
           <div class="field" style="flex:.65">
             <label>RR</label>
@@ -397,6 +420,27 @@ const ORDER_META = {
 const PENCIL_SVG = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M9.5 1.5l2 2-8 8H1.5v-2l8-8z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const CLOSE_SVG  = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2l8 8M10 2L2 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`;
 const RESET_SVG  = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 6a5 5 0 105-5 5 5 0 00-4.9 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M1 2v4h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+// ── Paste helper ──────────────────────────────────────────────
+async function pasteInto(id) {
+  const inp = document.getElementById(id);
+  const btn = document.getElementById('pb-' + id);
+  if (!inp || !btn) return;
+  try {
+    const text = await navigator.clipboard.readText();
+    const num  = text.trim().replace(/[^0-9.]/g, '');
+    if (num && !isNaN(parseFloat(num))) {
+      inp.value = num;
+      gen();
+      btn.classList.add('ok');
+      setTimeout(() => btn.classList.remove('ok'), 800);
+    }
+  } catch {
+    // Fallback: focus the field so user can paste manually
+    inp.focus();
+    inp.select();
+  }
+}
 
 // ── Setters ────────────────────────────────────────────────────
 function setOrder(o) {
